@@ -11,15 +11,32 @@ plugin.tx_seobasicspluginsitemap {
 /*
 plugin.tx_seobasicspluginsitemap {
     extensions {
+        # Use Extension Key here
         news {
-            detailPid = 24
-            table = tx_news_domain_model_news
-            additionalParams {
-                1 = tx_news_pi1[news]=$uid
+            # You can define multiple records here
+            news {
+                detailPid = 24
+                table = tx_news_domain_model_news
+                additionalParams {
+                    1 = tx_news_pi1[news]=$uid
+                    2 = tx_news_pi1[controller]=news
+                    3 = tx_news_pi1[action]=detail
+                }
+                fields {
+                    uid = uid
+                    tstamp = tstamp
+                }
             }
-            fields {
-                uid = uid
-                tstamp = tstamp
+            category {
+                detailPid = 15
+                table = sys_category
+                additionalParams {
+                    1 = tx_news_pi1[overwriteDemand][categories]=$uid
+                }
+                fields {
+                    uid = uid
+                    tstamp = tstamp
+                }
             }
         }
     }
