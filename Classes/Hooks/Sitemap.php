@@ -42,61 +42,64 @@ class Sitemap {
 
         $plugins = $GLOBALS['TSFE']->tmpl->setup['plugin.']['tx_seobasicspluginsitemap.']['extensions.'];
 
-        foreach($plugins as $plugin => $configuration) {
+        foreach($plugins as $plugin => $records) {
 
             if (\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded(substr($plugin, 0, -1))) {
-                $where = 'hidden = 0 AND deleted = 0';
-                $where .= (isset($configuration['where'])) ? ' AND ' . $configuration['where'] : '';
-                $result = $GLOBALS['TYPO3_DB']->exec_SELECTquery(
-                    implode(',', $configuration['fields.']),
-                    $configuration['table'],
-                    $where
-                );
 
-                $additionalParams = array();
-                foreach ($configuration['additionalParams.'] as $param) {
-                    $pair = explode('=', $param);
-                    $additionalParams[$pair[0]] = $pair[1];
-                }
+                foreach($records as $configuration) {
+                    $where = 'hidden = 0 AND deleted = 0';
+                    $where .= (isset($configuration['where'])) ? ' AND ' . $configuration['where'] : '';
+                    $result = $GLOBALS['TYPO3_DB']->exec_SELECTquery(
+                        implode(',', $configuration['fields.']),
+                        $configuration['table'],
+                        $where
+                    );
 
-                if ($GLOBALS['TYPO3_DB']->sql_num_rows($result)) {
-                    while($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($result)){
+                    $additionalParams = array();
+                    foreach ($configuration['additionalParams.'] as $param) {
+                        $pair = explode('=', $param);
+                        $additionalParams[$pair[0]] = $pair[1];
+                    }
 
-                        $uniqueAdditionalParams = array();
-                        foreach($additionalParams as $paramName => $paramValue) {
-                            $uniqueAdditionalParams[$paramName] = (substr($paramValue, 0, 1) == '$') ? $row[substr($paramValue, 1)] : $paramValue;
+                    if ($GLOBALS['TYPO3_DB']->sql_num_rows($result)) {
+                        while($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($result)){
+
+                            $uniqueAdditionalParams = array();
+                            foreach($additionalParams as $paramName => $paramValue) {
+                                $uniqueAdditionalParams[$paramName] = (substr($paramValue, 0, 1) == '$') ? $row[substr($paramValue, 1)] : $paramValue;
+                            }
+
+                            $conf = array(
+                                'parameter' => $configuration['detailPid'],
+                                'additionalParams' => \TYPO3\CMS\Core\Utility\GeneralUtility::implodeArrayForUrl('', $uniqueAdditionalParams),
+                                'returnLast' => 'url'
+                            );
+
+                            if (!isset($sitemap->conf['useDomain'])) {
+                                $conf['forceAbsoluteUrl'] = 1;
+                            }
+
+                            $link = $GLOBALS['TSFE']->cObj->typolink('', $conf);
+
+                            if (isset($sitemap->conf['useDomain'])) {
+                                $current = \TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
+                                $current = parse_url($current);
+                                $slash = (substr($link, 0, 1) == '/') ? '' : '/';
+                                $link = $current['scheme'] . '://' . $sitemap->conf['useDomain'] . $slash . $link;
+                            }
+
+                            if ($row[$configuration['fields.']['tstamp']]) {
+                                $lastmod = '<lastmod>' . htmlspecialchars(date('c', $row[$configuration['fields.']['tstamp']])) . '</lastmod>';
+                            } else {
+                                $lastmod = '';
+                            }
+
+                            $params['content'] .= '
+                                <url>
+                                    <loc>' . htmlspecialchars($link) . '</loc>' . $lastmod . '
+                                </url>
+                            ';
                         }
-
-                        $conf = array(
-                            'parameter' => $configuration['detailPid'],
-                            'additionalParams' => \TYPO3\CMS\Core\Utility\GeneralUtility::implodeArrayForUrl('', $uniqueAdditionalParams),
-                            'returnLast' => 'url'
-                        );
-
-                        if (!isset($sitemap->conf['useDomain'])) {
-                            $conf['forceAbsoluteUrl'] = 1;
-                        }
-
-                        $link = $GLOBALS['TSFE']->cObj->typolink('', $conf);
-
-                        if (isset($sitemap->conf['useDomain'])) {
-                            $current = \TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_SITE_URL');
-                            $current = parse_url($current);
-                            $slash = (substr($link, 0, 1) == '/') ? '' : '/';
-                            $link = $current['scheme'] . '://' . $sitemap->conf['useDomain'] . $slash . $link;
-                        }
-
-                        if ($row[$configuration['fields.']['tstamp']]) {
-                            $lastmod = '<lastmod>' . htmlspecialchars(date('c', $row[$configuration['fields.']['tstamp']])) . '</lastmod>';
-                        } else {
-                            $lastmod = '';
-                        }
-
-                        $params['content'] .= '
-                            <url>
-                                <loc>' . htmlspecialchars($link) . '</loc>' . $lastmod . '
-                            </url>
-                        ';
                     }
                 }
             }

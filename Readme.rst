@@ -21,31 +21,47 @@ This is an example for all records of the extension tx_news:
 ```
 
 plugin.tx_seobasicspluginsitemap {
-	extensions {
+    extensions {
 	
-	  # The extension key
-		news {
-		  # Insert the uid of the page which displays the single view of your plugin.
-		  detailPid = 54
-		  # The uid of your storage folder (optional)
-		  where = pid=100
-		      
-		  # The look up table
-		  table = tx_news_domain_model_news
-		      
-		  # An array of params for link building
-		  additionalParams {
-		  	1 = tx_news_pi1[news]=$uid
-		  }
-		      
-		  # Mapping of fields, which adds the possibility to use alternate fields for item generation.
-		  fields {
-				uid = uid
-		    	tstamp = crdate
-		    }
-		}
-		
-	}
+    # The extension key
+        news {
+            # You can define multiple records (You can use any key)
+            news {
+                # Insert the uid of the page which displays the single view of your plugin.
+                detailPid = 54
+
+                # The uid of your storage folder (optional)
+                where = pid=100
+
+                # The look up table
+                table = tx_news_domain_model_news
+
+                # An array of params for link building
+                additionalParams {
+                    1 = tx_news_pi1[news]=$uid
+                    2 = tx_news_pi1[controller]=news
+                    3 = tx_news_pi1[action]=detail
+                }
+
+                # Mapping of fields, which adds the possibility to use alternate fields for item generation.
+                fields {
+                    uid = uid
+                    tstamp = crdate
+                }
+            }
+            category {
+                detailPid = 15
+                table = sys_category
+                additionalParams {
+                    1 = tx_news_pi1[overwriteDemand][categories]=$uid
+                }
+                fields {
+                    uid = uid
+                    tstamp = tstamp
+                }
+            }
+        }
+    }
 }
 
 ```
